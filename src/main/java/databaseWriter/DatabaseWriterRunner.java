@@ -16,8 +16,6 @@ public class DatabaseWriterRunner {
             Map<String, Object> appConfig;
             Yaml yaml = new Yaml();
 
-
-            // try (InputStream in = new FileInputStream("/etc/jaggia/ymlConfigDB.yml")) {
             try (InputStream in = new FileInputStream("/etc/jaggia/ymlConfig.yml")) {
                 appConfig = (Map<String, Object>) yaml.load(in);
                 DatabaseWriter DatabaseWriter = new DatabaseWriter(appConfig);

@@ -15,7 +15,6 @@ public class ConsumerRunner {
         Map<String, Object> appConfig;
         Yaml yaml = new Yaml();
 
-        // try (InputStream in = new FileInputStream("/etc/jaggia/ymlConfigKafka.yml")) {
         try (InputStream in = new FileInputStream("/etc/jaggia/ymlConfig.yml")) {
             appConfig = (Map<String, Object>) yaml.load(in);
             Consumer consumer= new Consumer(appConfig);
