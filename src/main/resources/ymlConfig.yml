@@ -1,0 +1,59 @@
+kafka:
+  input:
+    bootstrap_servers: kafka:9092
+    input_topic: logstash
+    app_id: elastic01x
+  output:
+    output_topic: output
+
+influxdb:
+  connection : http://influxdb:8086
+  db_name : aTimeSeries
+  rp_name : autogen
+
+elastic:
+  hostname : localhost
+  scheme : http
+  port : 9200
+  index : aTimeSeries
+
+interval:
+   query_interval0: 60000 # 60 * 1000 - one minute
+   query_interval0_from: 600000 # 10 * 60 * 1000 - ten minutes
+   query_interval1: 3600000 # 60 * 60 * 1000 - one hour
+   query_interval1_from: 86400000 # 24 * 60 * 60 * 1000 - twenty-four hours
+   event_count_interval: 10000 # 10 * 1000 - ten seconds
+
+global_tables:
+  -
+   name: phn_to_cachegroup
+   key: phn
+   value: cachegroup
+  -
+   name: cachegroup_to_cdn
+   key: cachegroup
+   value: cdn
+
+agg:
+  -
+   name: count_pssc
+   action: count
+   action_field: pssc
+   tags:
+     - pssc
+     - phn
+     - shn
+   group_by:
+     - phn_to_cachegroup
+     - cachegroup_to_cdn
+
+  -
+   name: sum_b
+   action: sum
+   action_field: b
+   tags:
+     - phn
+     - shn
+   group_by:
+     - phn_to_cachegroup
+     - cachegroup_to_cdn

@@ -1,0 +1,108 @@
+version: '3'
+services:
+  kafka_jar:
+    image: runjava
+    build:
+     context: .
+    volumes:
+     - ${PWD}/etc/:/etc/jaggia/
+    environment:
+     - NUM_THREADS=1
+     - SNAPSHOT=1
+     - JAVA_OPTS=-Xmx2G -Xms2G
+    command: /home/kafkaJar.jar
+    restart: unless-stopped
+    depends_on:
+     - influxdb
+     - kafka
+
+  db_jar:
+    image: runjava
+    volumes:
+     - ${PWD}/etc/:/etc/jaggia/
+    environment:
+     - NUM_THREADS=1
+     - SNAPSHOT=0
+     - JAVA_OPTS=-Xmx1G -Xms1G
+    command: /home/dbJar.jar
+    restart: unless-stopped
+    depends_on:
+     - influxdb
+     - kafka
+
+  snapshot_jar:
+   image: runjava
+   volumes:
+    - ${PWD}/etc/:/etc/jaggia/
+   environment:
+    - NUM_THREADS=1
+    - SNAPSHOT=1
+    - JAVA_OPTS=-Xmx2G -Xms2G
+   command: /home/dbJar.jar
+   depends_on:
+    - influxdb
+    - kafka
+
+  influxdb:
+    image: influxdb
+    container_name: influxdb
+    volumes:
+     - influxdb-storage:/var/lib/influxdb
+
+  kafka:
+    image: kafka:0.10.2.1
+    build:
+     context: kafka/kafka
+     args:
+       KAFKA_VERSION: 0.10.2.1
+    container_name: kafka
+    #volumes:
+    # - ${PWD}/etc/server.properties:/opt/kafka/conf/server.properties
+    #environment:
+    # - KAFKA_VERSION=0.11.0.1
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    depends_on:
+     - influxdb
+    ports:
+     - 3000:3000
+    volumes:
+     - grafana-storage:/var/lib/grafana
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:5.5.2
+    container_name: logstash
+    volumes:
+     - ${PWD}/conf.d/:/usr/share/logstash/pipeline/
+    environment:
+     - XPACK_MONITORING_ENABLED=false
+    depends_on:
+     - kafka
+
+  elasticsearch:
+      image: docker.elastic.co/elasticsearch/elasticsearch:5.6.4
+      container_name: elastic
+      environment:
+        - xpack.security.enabled=false
+        - xpack.monitoring.enabled=false
+        - "ES_JAVA_OPTS=-Xmx512m -Xms512m"
+      ports:
+        - 9200:9200
+
+  kibana:
+      image: docker.elastic.co/kibana/kibana:5.6.4
+      container_name: kibana
+      ports:
+        - 5601:5601
+      environment:
+        - xpack.security.enabled=false
+        - xpack.monitoring.enabled=false
+        - "elasticsearch.url=http://elasticsearch:9200"
+      depends_on:
+        - elasticsearch
+
+volumes:
+  grafana-storage:
+  influxdb-storage:
